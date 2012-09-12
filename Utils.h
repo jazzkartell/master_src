@@ -24,11 +24,11 @@ void readFile(const char* file, pcl::PointCloud<Point2D>* cloud){
 	ifstream in (file);
 	vector<string> tokens;
 	if (in.is_open()){
-		while ( in.good() ){
+        while ( in.good() ){
 	    	getline (in,line);
 	    	if (line.empty()){continue;}
 	    	tokens.clear();
-			tokenize(line, tokens, "\t \n ");
+            tokenize(line, tokens, "\t \n ");
             Point2D p;
             for(int i=0; i<tokens.size();i++){
                 p.set_x(atof(tokens.at(0).c_str()));
@@ -37,7 +37,7 @@ void readFile(const char* file, pcl::PointCloud<Point2D>* cloud){
             }
             cloud->push_back(p);
 		}
-	   in.close();
+        in.close();
 	}else{
 		cout << "Unable to open file" << endl; 
 	} 
