@@ -6,61 +6,55 @@
 #include "pcl/common/geometry.h"
 #include "pcl/common/transformation_from_correspondences.h"
 #include "pcl/common/transforms.h"
+#include "pcl/common/distances.h"
 
 
 using namespace std;
 
+POINT_CLOUD_REGISTER_POINT_STRUCT(Point2D,(float, x, x)(float, y, y)(float, z, z)(u_int32_t, label_id, label_id)(u_int32_t, model_id, model_id))
 
+vector<string> labels;
+vector<pair<int,int> > models;
 
 int main(int argc, char** argv) {
     
-    pcl::PointCloud<pcl::PointXYZL>* cloud = new pcl::PointCloud<pcl::PointXYZL>();
+    pcl::PointCloud<Point2D>::Ptr cloud (new pcl::PointCloud<Point2D>);
     
     // we require one file containing the coordinate file as input
     if(argc != 2){
         cout << "Input File required!" << endl;
     }else{
-        readFile(argv[1], cloud);
+        readFile(argv[1], cloud, labels);
     }
     
+    // target point cloud
+    pcl::PointCloud<Point2D>::Ptr cloud2 (new pcl::PointCloud<Point2D>);
     // get all possible basis pairs
     int basis_count = 0;
     for(int i=0; i<cloud->size(); i++){
         for (int j=0; j<cloud->size(); j++){
             if(i != j){
+                pcl::PointCloud<Point2D>::Ptr transformedCloud (new pcl::PointCloud<Point2D>);
                 basis_count++;
+                // transform cloud to every new coordinate frame
+                Eigen::Affine3f trans;
+                pcl::TransformationFromCorrespondences t;
+                // (0,0,0)
+                Eigen::Vector3f origin = Eigen::Vector3f(cloud->at(i).getArray3fMap());
+                // point to get x line
+                Eigen::Vector3f p2 = Eigen::Vector3f(cloud->at(j).getArray3fMap());
+                // map origin to 0,0,0 and p2 to (dist,0,0)
+                t.add(origin,Eigen::Vector3f(0.0,0.0,0.0),1.0);
+                t.add(p2,Eigen::Vector3f(pcl::geometry::distance(origin,p2),0.0,0.0),1.0);
+                trans = t.getTransformation();
+                //Transform all other points
                 
+                pcl::transformPointCloud(*cloud, *transformedCloud, trans);
+                *cloud2 += *transformedCloud;
             }
         }
     }
-    cout << basis_count << " basis were produced..." << endl;
-
-    
-    const Eigen::Vector3f y_dir = Eigen::Vector3f(0.0,1.0,0.0);
-    const Eigen::Vector3f z_axis = Eigen::Vector3f(0.0,0.0,1.0);
-    const Eigen::Vector3f origin = Eigen::Vector3f(2.0,3.0,0.0);
-    
-    pcl::PointCloud<pcl::PointXYZL>* cloud2 = new pcl::PointCloud<pcl::PointXYZL>();
-    
-    Eigen::Affine3f trans;
-    pcl::getTransformationFromTwoUnitVectorsAndOrigin(y_dir, z_axis, origin, trans);
-    
-    vector<int> indices;
-    indices.push_back(0);
-    pcl::transformPointCloud(*cloud, *cloud2, trans);
-    
-    cout << cloud2->size() << endl;
-    for(int i=0; i<cloud2->size(); i++){
-        cout << cloud->at(i).getArray3fMap()[0] << " ";
-        cout << cloud->at(i).getArray3fMap()[1] << "  -->  ";
-        
-        cout << cloud2->at(i).getArray3fMap()[0] << " ";
-        cout << cloud2->at(i).getArray3fMap()[1] << endl;
-    }
-    
-    
-    delete cloud;
-    delete cloud2;
+    printCloud(cloud2, labels);
     return 0;
 }
 
