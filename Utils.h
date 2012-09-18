@@ -5,6 +5,7 @@
 #include <fstream>
 #include <stdlib.h>
 
+
 using namespace std;
 
 struct Point2D{
@@ -49,11 +50,15 @@ void readFile(const char* file, pcl::PointCloud<Point2D>::Ptr cloud, vector<stri
 	} 
 }
 
-void printCloud(pcl::PointCloud<Point2D>::Ptr cloud, vector<string>& labels){
+void printCloud(pcl::PointCloud<Point2D>::Ptr cloud, vector<string>& labels, vector<pair<int,int> >& models, const char* file){
+    fstream File;
+    File.open(file, ios::out);
     for (int i=0; i<cloud->size(); i++){
-        cout << cloud->at(i).getArray3fMap()[0] << " "
+        File << fixed << cloud->at(i).getArray3fMap()[0] << " "
              << cloud->at(i).getArray3fMap()[1] << " "
              << cloud->at(i).getArray3fMap()[2] << " "
-             << labels.at(cloud->at(i).label_id) << endl;
+             << labels.at(cloud->at(i).label_id) << " (" << models.at(cloud->at(i).model_id).first
+             << "," << models.at(cloud->at(i).model_id).second << ")" << endl;
     }
+    File.close();
 }

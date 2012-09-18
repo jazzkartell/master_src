@@ -34,8 +34,11 @@ int main(int argc, char** argv) {
     for(int i=0; i<cloud->size(); i++){
         for (int j=0; j<cloud->size(); j++){
             if(i != j){
+                pair<int,int> p;
+                p.first = i;
+                p.second = j;
+                models.push_back(p);
                 pcl::PointCloud<Point2D>::Ptr transformedCloud (new pcl::PointCloud<Point2D>);
-                basis_count++;
                 // transform cloud to every new coordinate frame
                 Eigen::Affine3f trans;
                 pcl::TransformationFromCorrespondences t;
@@ -48,13 +51,28 @@ int main(int argc, char** argv) {
                 t.add(p2,Eigen::Vector3f(pcl::geometry::distance(origin,p2),0.0,0.0),1.0);
                 trans = t.getTransformation();
                 //Transform all other points
-                
                 pcl::transformPointCloud(*cloud, *transformedCloud, trans);
+                // set the model
+                
+                for (int k=0; k<transformedCloud->size(); k++){
+                    transformedCloud->at(k).model_id = basis_count;
+                }
+                basis_count++;
                 *cloud2 += *transformedCloud;
             }
         }
     }
-    printCloud(cloud2, labels);
+    
+    //prepare out file
+    string outFile = argv[1];
+    size_t result = outFile.find_last_of('.');
+
+    if (string::npos != result){
+        outFile.erase(result);
+    }
+    outFile.append("_hash.dat");
+
+    printCloud(cloud2, labels, models, outFile.c_str());
     return 0;
 }
 
