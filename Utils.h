@@ -51,9 +51,15 @@ void readFile(const char* file, pcl::PointCloud<Point2D>::Ptr cloud, vector<stri
 
 void printCloud(pcl::PointCloud<Point2D>::Ptr cloud, vector<string>& labels){
     for (int i=0; i<cloud->size(); i++){
-        cout << cloud->at(i).getArray3fMap()[0] << " "
-             << cloud->at(i).getArray3fMap()[1] << " "
-             << cloud->at(i).getArray3fMap()[2] << " "
-             << labels.at(cloud->at(i).label_id) << endl;
+      	printf("%f", cloud->at(i).getArray3fMap()[0]);
+	cout << " ";
+	printf("%f", cloud->at(i).getArray3fMap()[1]);
+	cout << " ";
+	printf("%f", cloud->at(i).getArray3fMap()[2]);
+	cout << " " << labels.at(cloud->at(i).label_id) << endl;
+	// cout << cloud->at(i).getArray3fMap()[0] << " "
+       //      << cloud->at(i).getArray3fMap()[1] << " "
+       //      << cloud->at(i).getArray3fMap()[2] << " "
+       //      << labels.at(cloud->at(i).label_id) << endl;
     }
 }
