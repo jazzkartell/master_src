@@ -59,11 +59,7 @@ void printCloud(pcl::PointCloud<Point2D>::Ptr cloud, vector<string>& labels, vec
 		printf("%f", cloud->at(i).getArray3fMap()[1]);
 		cout << " ";
 		printf("%f", cloud->at(i).getArray3fMap()[2]);
-		cout << " " << labels.at(cloud->at(i).label_id) << endl;
-	// cout << cloud->at(i).getArray3fMap()[0] << " "
-       //      << cloud->at(i).getArray3fMap()[1] << " "
-       //      << cloud->at(i).getArray3fMap()[2] << " "
-       //      << labels.at(cloud->at(i).label_id) << endl;
+		cout << " " << labels.at(cloud->at(i).label_id) << " (" << models.at(cloud->at(i).model_id).first << "," << models.at(cloud->at(i).model_id).second << ")" <<endl;
     }
 }
 
