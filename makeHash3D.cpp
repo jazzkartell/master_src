@@ -68,6 +68,7 @@ int main(int argc, char** argv) {
     }
     
     /**prepare out file
+    //prepare out file
     string outFile = argv[1];
     size_t result = outFile.find_last_of('.');
 
@@ -79,4 +80,3 @@ int main(int argc, char** argv) {
     printCloud(cloud2, labels, models, outFile.c_str());
     return 0;
 }
-
