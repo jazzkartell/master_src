@@ -1,109 +1,82 @@
-#include <pcl/io/pcd_io.h>
-#include <pcl/point_types.h>
+//#include "Utils.h"
 #include <string>
+#include <iostream>
+#include <pcl/point_types.h>
+#include "Utils.h"
+#include "pcl/common/geometry.h"
+#include "pcl/common/transformation_from_correspondences.h"
+#include "pcl/common/transforms.h"
+#include "pcl/common/distances.h"
+
 
 using namespace std;
 
-struct Point3d{
-    double x;
-    double y;
-    double z;
-    string label;
-};
+POINT_CLOUD_REGISTER_POINT_STRUCT(Point3D,(float, x, x)(float, y, y)(float, z, z)(u_int32_t, label_id, label_id)(u_int32_t, model_id, model_id))
 
-void tokenize(const string& str, vector<string>& tokens, const string& delimiters);
-
-void readFile(const char* file, pcl::PointCloud<Point3d>* cloud);
-
-void printCloud(pcl::PointCloud<Point3d>* cloud);
-
-
+vector<string> labels;
+// a basis consists of three points, so we use a vector
+vector<vector<int> > models;
 
 int main(int argc, char** argv) {
-
-    // command line parsing
-    int c;
-    int digit_optind = 0;
-    char *iopt = 0, *oopt = 0;
     
-    //if (argc != 5){
-    //    std::cout << "coordinate file required!" << std::endl;
-    //    return 0;
-    //}
+    pcl::PointCloud<Point3D>::Ptr cloud (new pcl::PointCloud<Point3D>);
     
-    while ( (c = getopt(argc, argv, "i:o:")) != -1) {
-        int this_option_optind = optind ? optind : 1;
-        switch (c) {
-        case 'i':
-            iopt = optarg;
-            break;
-        case 'o':
-            oopt = optarg;
-            break;
-        case '?':
-            break;
-        default:
-            printf ("?? getopt returned character code 0%o ??\n", c);
+    // we require one file containing the coordinate file as input
+    if(argc != 2){
+        cout << "Input File required!" << endl;
+    }else{
+        readFile(argv[1], cloud, labels);
+    }
+    
+    // target point cloud
+    pcl::PointCloud<Point3D>::Ptr cloud2 (new pcl::PointCloud<Point3D>);
+    // get all possible basis pairs
+    int basis_count = 0;
+    for(int i=0; i<cloud->size(); i++){
+        for (int j=0; j<cloud->size(); j++){
+        	for (int k=0; k<cloud->size();k++){
+            	if(i != j && i != k && j != k){
+            		vector<int> m;
+            		m.push_back(i);
+            		m.push_back(j);
+            		m.push_back(k);
+                	models.push_back(m);
+                	pcl::PointCloud<Point3D>::Ptr transformedCloud (new pcl::PointCloud<Point3D>);
+                	// transform cloud to every new coordinate frame
+                	Eigen::Affine3f trans;
+                	pcl::TransformationFromCorrespondences t;
+                	// (0,0,0)
+                	Eigen::Vector3f origin = Eigen::Vector3f(cloud->at(i).getArray3fMap());
+                	// point to get x line
+                	Eigen::Vector3f p2 = Eigen::Vector3f(cloud->at(j).getArray3fMap());
+                	// map origin to 0,0,0 and p2 to (dist,0,0)
+                	t.add(origin,Eigen::Vector3f(0.0,0.0,0.0),1.0);
+                	t.add(p2,Eigen::Vector3f(pcl::geometry::distance(origin,p2),0.0,0.0),1.0);
+                	trans = t.getTransformation();
+                	//Transform all other points
+                	pcl::transformPointCloud(*cloud, *transformedCloud, trans);
+                	// set the model
+                
+                	for (int k=0; k<transformedCloud->size(); k++){
+                    	transformedCloud->at(k).model_id = basis_count;
+                	}
+                	basis_count++;
+                	*cloud2 += *transformedCloud;
+            	}
+            }
         }
     }
-    if (optind < argc) {
-        printf ("non-option ARGV-elements: ");
-        while (optind < argc)
-            printf ("%s ", argv[optind++]);
-        printf ("\n");
+    
+    //prepare out file
+    string outFile = argv[1];
+    size_t result = outFile.find_last_of('.');
+
+    if (string::npos != result){
+        outFile.erase(result);
     }
-    // end command line parsing
-    
-   
-    pcl::PointCloud<Point3d>* cloud = new pcl::PointCloud<Point3d>();
-   
-    readFile(iopt, cloud);
-    
-    //printCloud(cloud);
-    
-    delete cloud;
-    
+    outFile.append("_hash.dat");
+
+    printCloud(cloud2, labels, models, outFile.c_str());
     return 0;
 }
 
-void printCloud(pcl::PointCloud<Point3d>* cloud){
-    for (int i=0; i<cloud->size(); i++){
-        cout << cloud->points[i].x << " " << cloud->points[i].y << " " <<
-                cloud->points[i].z << " " << cloud->points[i].label << endl;
-    }
-}
-
-void readFile(const char* file, pcl::PointCloud<Point3d>* cloud){
-	string line;
-	ifstream in (file);
-	vector<string> tokens;
-	if (in.is_open()){
-		while ( in.good() ){
-	    	getline (in,line);
-	    	if (line.empty()){continue;}
-	    	tokens.clear();
-			tokenize(line, tokens, "\t \n ");
-            Point3d p;
-            for(int i=0; i<tokens.size();i++){
-                p.x = atof(tokens.at(0).c_str());
-                p.y = atof(tokens.at(1).c_str());
-                p.z = atof(tokens.at(2).c_str());
-                p.label = tokens.at(3);
-            }
-            cloud->push_back(p);
-		}
-	   in.close();
-	}else{
-		cout << "Unable to open file" << endl; 
-	} 
-}
-
-void tokenize(const string& str, vector<string>& tokens, const string& delimiters){
-    string::size_type lastPos = str.find_first_not_of(delimiters, 0);
-    string::size_type pos     = str.find_first_of(delimiters, lastPos);
-    while (string::npos != pos || string::npos != lastPos){
-        tokens.push_back(str.substr(lastPos, pos - lastPos));
-        lastPos = str.find_first_not_of(delimiters, pos);
-        pos = str.find_first_of(delimiters, lastPos);
-    }
-}

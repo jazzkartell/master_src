@@ -11,14 +11,15 @@
 
 using namespace std;
 
-POINT_CLOUD_REGISTER_POINT_STRUCT(Point2D,(float, x, x)(float, y, y)(float, z, z)(u_int32_t, label_id, label_id)(u_int32_t, model_id, model_id))
+POINT_CLOUD_REGISTER_POINT_STRUCT(Point3D,(float, x, x)(float, y, y)(float, z, z)(u_int32_t, label_id, label_id)(u_int32_t, model_id, model_id))
 
 vector<string> labels;
-vector<pair<int,int> > models;
+// a basis consists of two points, so we use a vector
+vector<vector<int> > models;
 
 int main(int argc, char** argv) {
     
-    pcl::PointCloud<Point2D>::Ptr cloud (new pcl::PointCloud<Point2D>);
+    pcl::PointCloud<Point3D>::Ptr cloud (new pcl::PointCloud<Point3D>);
     
     // we require one file containing the coordinate file as input
     if(argc != 2){
@@ -28,17 +29,17 @@ int main(int argc, char** argv) {
     }
     
     // target point cloud
-    pcl::PointCloud<Point2D>::Ptr cloud2 (new pcl::PointCloud<Point2D>);
+    pcl::PointCloud<Point3D>::Ptr cloud2 (new pcl::PointCloud<Point3D>);
     // get all possible basis pairs
     int basis_count = 0;
     for(int i=0; i<cloud->size(); i++){
         for (int j=0; j<cloud->size(); j++){
             if(i != j){
-                pair<int,int> p;
-                p.first = i;
-                p.second = j;
-                models.push_back(p);
-                pcl::PointCloud<Point2D>::Ptr transformedCloud (new pcl::PointCloud<Point2D>);
+                vector<int> m;
+            	m.push_back(i);
+            	m.push_back(j);
+            	models.push_back(m);
+                pcl::PointCloud<Point3D>::Ptr transformedCloud (new pcl::PointCloud<Point3D>);
                 // transform cloud to every new coordinate frame
                 Eigen::Affine3f trans;
                 pcl::TransformationFromCorrespondences t;
