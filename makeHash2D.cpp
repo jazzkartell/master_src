@@ -7,7 +7,7 @@
 #include "pcl/common/transformation_from_correspondences.h"
 #include "pcl/common/transforms.h"
 #include "pcl/common/distances.h"
-
+#include <pcl/visualization/cloud_viewer.h>
 
 using namespace std;
 
@@ -64,15 +64,18 @@ int main(int argc, char** argv) {
         }
     }
     
+    
+    
     //prepare out file
     string outFile = argv[1];
+    /**
     size_t result = outFile.find_last_of('.');
 
     if (string::npos != result){
         outFile.erase(result);
     }
     outFile.append("_hash.dat");
-
+**/
     printCloud(cloud2, labels, models, outFile.c_str());
     return 0;
 }

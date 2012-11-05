@@ -47,11 +47,21 @@ int main(int argc, char** argv) {
                 	pcl::TransformationFromCorrespondences t;
                 	// (0,0,0)
                 	Eigen::Vector3f origin = Eigen::Vector3f(cloud->at(i).getArray3fMap());
-                	// point to get x line
+                	// point to get x line, we need to set z to 0
                 	Eigen::Vector3f p2 = Eigen::Vector3f(cloud->at(j).getArray3fMap());
+                	Eigen::Vector3f p2_z0 = Eigen::Vector3f(cloud->at(j).getArray3fMap());
+					p2_z0[2] = 0.0;
                 	// map origin to 0,0,0 and p2 to (dist,0,0)
                 	t.add(origin,Eigen::Vector3f(0.0,0.0,0.0),1.0);
-                	t.add(p2,Eigen::Vector3f(pcl::geometry::distance(origin,p2),0.0,0.0),1.0);
+                	t.add(p2,Eigen::Vector3f(pcl::geometry::distance(origin,p2_z0),0.0,0.0),1.0);
+    
+                	// p3 defines z axis -> y=0.0
+                	Eigen::Vector3f p3 = Eigen::Vector3f(cloud->at(k).getArray3fMap());
+                	Eigen::Vector3f p3_y0 = Eigen::Vector3f(cloud->at(k).getArray3fMap());
+					p3_y0[1] = 0.0;
+    				//t.add(p3,Eigen::Vector3f(pcl::geometry::distance(origin,p3),0.0,pcl::geometry::distance(origin,p3)),1.0);
+                	
+                	
                 	trans = t.getTransformation();
                 	//Transform all other points
                 	pcl::transformPointCloud(*cloud, *transformedCloud, trans);
@@ -66,10 +76,10 @@ int main(int argc, char** argv) {
             }
         }
     }
-    
+    string outFile = argv[1];
+
     /**prepare out file
     //prepare out file
-    string outFile = argv[1];
     size_t result = outFile.find_last_of('.');
 
     if (string::npos != result){
