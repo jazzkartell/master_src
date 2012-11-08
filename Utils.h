@@ -57,7 +57,7 @@ void readFile(const char* file, pcl::PointCloud<Point3D>::Ptr cloud, vector<stri
 	} 
 }
 
-void printCloud(pcl::PointCloud<Point3D>::Ptr cloud, vector<string>& labels, vector<vector<int> >& models, const char* file){
+void printCloud(pcl::PointCloud<Point3D>::Ptr cloud, vector<string>& labels, vector<vector<int> >& models){
     //fstream File;
     //File.open(file, ios::out);
     for (int i=0; i<cloud->size(); i++){

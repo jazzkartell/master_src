@@ -1,4 +1,3 @@
-//#include "Utils.h"
 #include <string>
 #include <iostream>
 #include <pcl/point_types.h>
@@ -8,7 +7,6 @@
 #include "pcl/common/transforms.h"
 #include "pcl/common/distances.h"
 
-
 using namespace std;
 
 POINT_CLOUD_REGISTER_POINT_STRUCT(Point3D,(float, x, x)(float, y, y)(float, z, z)(u_int32_t, label_id, label_id)(u_int32_t, model_id, model_id))
@@ -16,6 +14,7 @@ POINT_CLOUD_REGISTER_POINT_STRUCT(Point3D,(float, x, x)(float, y, y)(float, z, z
 vector<string> labels;
 // a basis consists of three points, so we use a vector
 vector<vector<int> > models;
+
 
 int main(int argc, char** argv) {
     
@@ -32,6 +31,7 @@ int main(int argc, char** argv) {
     pcl::PointCloud<Point3D>::Ptr cloud2 (new pcl::PointCloud<Point3D>);
     // get all possible basis pairs
     int basis_count = 0;
+    
     for(int i=0; i<cloud->size(); i++){
         for (int j=0; j<cloud->size(); j++){
         	for (int k=0; k<cloud->size();k++){
@@ -41,32 +41,55 @@ int main(int argc, char** argv) {
             		m.push_back(j);
             		m.push_back(k);
                 	models.push_back(m);
-                	pcl::PointCloud<Point3D>::Ptr transformedCloud (new pcl::PointCloud<Point3D>);
-                	// transform cloud to every new coordinate frame
+                	
+                    Eigen::Vector3f a = Eigen::Vector3f(cloud->at(i).getArray3fMap());
+                    Eigen::Vector3f b = Eigen::Vector3f(cloud->at(j).getArray3fMap());
+                    Eigen::Vector3f c = Eigen::Vector3f(cloud->at(k).getArray3fMap());
+                    
+                    double a_length = pcl::geometry::distance(b,c);
+                    double b_length = pcl::geometry::distance(a,c);
+                    double c_length = pcl::geometry::distance(a,b);
+                    
+                    // compute the heights of c to get z coordinate
+                    double z = sqrt(pow(b_length,2)-((pow((pow(c_length,2)+pow(b_length,2)-pow(a_length,2)),2))/(4*pow(c_length,2))));
+                   
+                    pcl::PointCloud<Point3D>::Ptr transformedCloud_tmp (new pcl::PointCloud<Point3D>);
+                    pcl::PointCloud<Point3D>::Ptr transformedCloud (new pcl::PointCloud<Point3D>);
+
                 	Eigen::Affine3f trans;
                 	pcl::TransformationFromCorrespondences t;
-                	// (0,0,0)
-                	Eigen::Vector3f origin = Eigen::Vector3f(cloud->at(i).getArray3fMap());
-                	// point to get x line, we need to set z to 0
-                	Eigen::Vector3f p2 = Eigen::Vector3f(cloud->at(j).getArray3fMap());
-                	Eigen::Vector3f p2_z0 = Eigen::Vector3f(cloud->at(j).getArray3fMap());
-					p2_z0[2] = 0.0;
-                	// map origin to 0,0,0 and p2 to (dist,0,0)
-                	t.add(origin,Eigen::Vector3f(0.0,0.0,0.0),1.0);
-                	t.add(p2,Eigen::Vector3f(pcl::geometry::distance(origin,p2_z0),0.0,0.0),1.0);
-    
-                	// p3 defines z axis -> y=0.0
-                	Eigen::Vector3f p3 = Eigen::Vector3f(cloud->at(k).getArray3fMap());
-                	Eigen::Vector3f p3_y0 = Eigen::Vector3f(cloud->at(k).getArray3fMap());
-					p3_y0[1] = 0.0;
-    				//t.add(p3,Eigen::Vector3f(pcl::geometry::distance(origin,p3),0.0,pcl::geometry::distance(origin,p3)),1.0);
                 	
-                	
+                    // map p1 to (0,0,0)
+                	// point to get x line, x line goes directly to p2
+                	t.add(a,Eigen::Vector3f(0.0,0.0,0.0),1.0);
+                	t.add(b,Eigen::Vector3f(pcl::geometry::distance(a,b),0.0,0.0),1.0);
+                	// now transform such that p1 and p2 build x-axes
                 	trans = t.getTransformation();
-                	//Transform all other points
-                	pcl::transformPointCloud(*cloud, *transformedCloud, trans);
-                	// set the model
-                
+                	pcl::transformPointCloud(*cloud, *transformedCloud_tmp, trans);
+                    
+                    Eigen::Affine3f trans2;
+                	pcl::TransformationFromCorrespondences t2;
+                    
+                    Eigen::Vector3f new_c = Eigen::Vector3f(transformedCloud_tmp->at(k).getArray3fMap());
+                    new_c[1] = 0.0;
+                    new_c[2] = z;
+                    
+                    t2.add(transformedCloud_tmp->at(i).getArray3fMap(),transformedCloud_tmp->at(i).getArray3fMap(),1.0);
+                	t2.add(transformedCloud_tmp->at(j).getArray3fMap(),transformedCloud_tmp->at(j).getArray3fMap(),1.0);
+                    t2.add(transformedCloud_tmp->at(k).getArray3fMap(),new_c);
+                    
+                    trans2 = t2.getTransformation();
+                	pcl::transformPointCloud(*transformedCloud_tmp, *transformedCloud, trans2);
+                    
+                	//check distances
+                    //cout << "p1 -- p2 original: " << pcl::geometry::distance(cloud->at(i).getArray3fMap(),cloud->at(j).getArray3fMap()) << endl;
+                    //cout << "p1 -- p3 original: " << pcl::geometry::distance(cloud->at(i).getArray3fMap(),cloud->at(k).getArray3fMap()) << endl;
+                    //cout << "p2 -- p3 original: " << pcl::geometry::distance(cloud->at(j).getArray3fMap(),cloud->at(k).getArray3fMap()) << endl;
+                    //cout << "p1 -- p2 transformed: " << pcl::geometry::distance(transformedCloud->at(i).getArray3fMap(),transformedCloud->at(j).getArray3fMap()) << endl;
+                    //cout << "p1 -- p3 transformed: " << pcl::geometry::distance(transformedCloud->at(i).getArray3fMap(),transformedCloud->at(k).getArray3fMap()) << endl;
+                    //cout << "p2 -- p3 transformed: " << pcl::geometry::distance(transformedCloud->at(j).getArray3fMap(),transformedCloud->at(k).getArray3fMap()) << endl << endl;
+                    // set the model
+                   
                 	for (int k=0; k<transformedCloud->size(); k++){
                     	transformedCloud->at(k).model_id = basis_count;
                 	}
@@ -76,7 +99,13 @@ int main(int argc, char** argv) {
             }
         }
     }
-    string outFile = argv[1];
+    
+    // put everything in a kd tree
+    // pcl::search::KdTree<pcl::PointXYZL>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZL>);
+    // tree->setInputCloud(cloud2);
+    
+    
+    //string outFile = argv[1];
 
     /**prepare out file
     //prepare out file
@@ -87,6 +116,6 @@ int main(int argc, char** argv) {
     }
     outFile.append("_hash.dat");
 	**/
-    printCloud(cloud2, labels, models, outFile.c_str());
+    printCloud(cloud2, labels, models);
     return 0;
 }

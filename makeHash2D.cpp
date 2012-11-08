@@ -10,15 +10,15 @@
 #include <pcl/visualization/cloud_viewer.h>
 
 using namespace std;
-
+/**
 POINT_CLOUD_REGISTER_POINT_STRUCT(Point3D,(float, x, x)(float, y, y)(float, z, z)(u_int32_t, label_id, label_id)(u_int32_t, model_id, model_id))
 
 vector<string> labels;
 // a basis consists of two points, so we use a vector
 vector<vector<int> > models;
-
+**/
 int main(int argc, char** argv) {
-    
+   /** 
     pcl::PointCloud<Point3D>::Ptr cloud (new pcl::PointCloud<Point3D>);
     
     // we require one file containing the coordinate file as input
@@ -76,7 +76,7 @@ int main(int argc, char** argv) {
     }
     outFile.append("_hash.dat");
 **/
-    printCloud(cloud2, labels, models, outFile.c_str());
+
+//    printCloud(cloud2, labels, models, outFile.c_str());
     return 0;
 }
-
