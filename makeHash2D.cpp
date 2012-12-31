@@ -10,26 +10,26 @@
 #include <pcl/visualization/cloud_viewer.h>
 
 using namespace std;
-/**
-POINT_CLOUD_REGISTER_POINT_STRUCT(Point3D,(float, x, x)(float, y, y)(float, z, z)(u_int32_t, label_id, label_id)(u_int32_t, model_id, model_id))
+
+POINT_CLOUD_REGISTER_POINT_STRUCT(Point2D,(float, x, x)(float, y, y)(u_int32_t, label_id, label_id)(u_int32_t, model_id, model_id))
 
 vector<string> labels;
 // a basis consists of two points, so we use a vector
 vector<vector<int> > models;
-**/
+
 int main(int argc, char** argv) {
-   /** 
-    pcl::PointCloud<Point3D>::Ptr cloud (new pcl::PointCloud<Point3D>);
+    
+    pcl::PointCloud<Point2D>::Ptr cloud (new pcl::PointCloud<Point2D>);
     
     // we require one file containing the coordinate file as input
     if(argc != 2){
         cout << "Input File required!" << endl;
     }else{
-        readFile(argv[1], cloud, labels);
+        readFile2D(argv[1], cloud, labels);
     }
     
     // target point cloud
-    pcl::PointCloud<Point3D>::Ptr cloud2 (new pcl::PointCloud<Point3D>);
+    pcl::PointCloud<Point2D>::Ptr cloud2 (new pcl::PointCloud<Point2D>);
     // get all possible basis pairs
     int basis_count = 0;
     for(int i=0; i<cloud->size(); i++){
@@ -39,7 +39,8 @@ int main(int argc, char** argv) {
             	m.push_back(i);
             	m.push_back(j);
             	models.push_back(m);
-                pcl::PointCloud<Point3D>::Ptr transformedCloud (new pcl::PointCloud<Point3D>);
+            	
+                pcl::PointCloud<Point2D>::Ptr transformedCloud (new pcl::PointCloud<Point2D>);
                 // transform cloud to every new coordinate frame
                 Eigen::Affine3f trans;
                 pcl::TransformationFromCorrespondences t;
@@ -65,7 +66,7 @@ int main(int argc, char** argv) {
     }
     
     
-    
+    /**
     //prepare out file
     string outFile = argv[1];
     /**
@@ -76,7 +77,6 @@ int main(int argc, char** argv) {
     }
     outFile.append("_hash.dat");
 **/
-
-//    printCloud(cloud2, labels, models, outFile.c_str());
+printCloud2D(cloud2, labels, models);
     return 0;
 }
