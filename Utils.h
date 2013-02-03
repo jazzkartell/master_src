@@ -49,7 +49,7 @@ void readFile(const char* file, pcl::PointCloud<Point3D>::Ptr cloud, vector<stri
             }
             p.label_id = cloud->size();
             cloud->push_back(p);
-            labels.push_back(tokens.at(3));
+            labels.push_back("");
 		}
         in.close();
 	}else{
@@ -98,11 +98,11 @@ void printCloud(pcl::PointCloud<Point3D>::Ptr cloud, vector<string>& labels, vec
     	}**/
       	// 3D case
       	if (models.at(cloud->at(i).model_id).size() == 3){
-    		printf("%f", cloud->at(i).getArray3fMap()[0]);
+    		printf("%.10f", cloud->at(i).getArray3fMap()[0]);
 			cout << " ";
-			printf("%f", cloud->at(i).getArray3fMap()[1]);
+			printf("%.10f", cloud->at(i).getArray3fMap()[1]);
 			cout << " ";
-			printf("%f", cloud->at(i).getArray3fMap()[2]);
+			printf("%.10f", cloud->at(i).getArray3fMap()[2]);
 			cout << " " << labels.at(cloud->at(i).label_id) << " (" << models.at(cloud->at(i).model_id)[0] << "," << models.at(cloud->at(i).model_id)[1] << "," << models.at(cloud->at(i).model_id)[2] << ")" <<endl;
     	}
     }

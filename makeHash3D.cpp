@@ -49,10 +49,15 @@ int main(int argc, char** argv) {
                     double a_length = pcl::geometry::distance(b,c);
                     double b_length = pcl::geometry::distance(a,c);
                     double c_length = pcl::geometry::distance(a,b);
-                    
+
                     // compute the heights of c to get z coordinate
-                    double z = sqrt(pow(b_length,2)-((pow((pow(c_length,2)+pow(b_length,2)-pow(a_length,2)),2))/(4*pow(c_length,2))));
-                   
+					double z;
+					double tmp = ((pow((pow(c_length,2)+pow(b_length,2)-pow(a_length,2)),2))/(4*pow(c_length,2)));
+					if (pow(b_length,2)-tmp < 0){
+                    	z = 0-sqrt(fabs(pow(b_length,2)-tmp));
+					}else{
+						z = sqrt(fabs(pow(b_length,2)-tmp));
+					}
                     pcl::PointCloud<Point3D>::Ptr transformedCloud_tmp (new pcl::PointCloud<Point3D>);
                     pcl::PointCloud<Point3D>::Ptr transformedCloud (new pcl::PointCloud<Point3D>);
 
