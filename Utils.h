@@ -74,7 +74,7 @@ void readFile2D(const char* file, pcl::PointCloud<Point2D>::Ptr cloud, vector<st
             }
             p.label_id = cloud->size();
             cloud->push_back(p);
-            labels.push_back(tokens.at(2));
+            labels.push_back("");
 		}
         in.close();
 	}else{
